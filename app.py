@@ -1,6 +1,18 @@
 from flask import Flask, render_template
 
+from database.db import close_db, init_db, seed_db
+
 app = Flask(__name__)
+
+
+# ------------------------------------------------------------------ #
+# Database — initialize schema and seed sample data on startup       #
+# ------------------------------------------------------------------ #
+with app.app_context():
+    init_db()
+    seed_db()
+
+app.teardown_appcontext(close_db)
 
 
 # ------------------------------------------------------------------ #
