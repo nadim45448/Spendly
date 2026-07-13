@@ -13,7 +13,7 @@
         </div>
 
         <h1 class="hero-title">
-            Track every rupee.<br>
+            Track every taka.<br>
             <em>Know where it goes.</em>
         </h1>
 
@@ -24,7 +24,7 @@
 
         <div class="hero-actions">
             <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
-            <a href="#" class="btn-primary btn-secondary">See how it works</a>
+            <a href="#" id="open-video" class="btn-primary btn-secondary">See how it works</a>
         </div>
     </div>
 
@@ -67,6 +67,59 @@
             </div>
         </div>
     </div>
+
+    <!-- Video modal -->
+    <div id="video-modal" class="modal-overlay" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <button class="modal-close" aria-label="Close video">×</button>
+            <div class="modal-content">
+                <!-- iframe src set via JS to allow stopping playback when closed -->
+                <iframe id="video-iframe" width="800" height="450" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen data-src="https://www.youtube.com/embed/dQw4w9WgXcQ"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function(){
+            var openBtn = document.getElementById('open-video');
+            var modal = document.getElementById('video-modal');
+            var closeBtn = modal && modal.querySelector('.modal-close');
+            var iframe = document.getElementById('video-iframe');
+            var src = iframe && iframe.getAttribute('data-src');
+
+            function openModal(e){
+                e && e.preventDefault();
+                if(!modal) return;
+                modal.style.display = 'flex';
+                modal.setAttribute('aria-hidden', 'false');
+                // set src to start video (autoplay may be blocked by browser; leaving without autoplay) 
+                if(iframe && src){
+                    // add autoplay param to encourage playback
+                    iframe.src = src + '?autoplay=1';
+                }
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeModal(){
+                if(!modal) return;
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+                // stop video by clearing src
+                if(iframe){ iframe.src = ''; }
+                document.body.style.overflow = '';
+            }
+
+            if(openBtn){ openBtn.addEventListener('click', openModal); }
+            if(closeBtn){ closeBtn.addEventListener('click', closeModal); }
+            if(modal){
+                modal.addEventListener('click', function(e){
+                    if(e.target === modal){ closeModal(); }
+                });
+                // close on ESC
+                document.addEventListener('keydown', function(e){ if(e.key === 'Escape'){ closeModal(); } });
+            }
+        })();
+    </script>
 </section>
 
 <section class="features">

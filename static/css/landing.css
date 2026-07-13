@@ -75,3 +75,48 @@
     .stat { width: 100%; }
     .mock-stats { flex-direction: column; }
 }
+
+/* Modal styles */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.6);
+    z-index: 2000;
+    padding: 2rem;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 12px;
+    max-width: 900px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-content { padding: 0; }
+
+.modal-close {
+    position: absolute;
+    right: 12px;
+    top: 8px;
+    background: transparent;
+    border: none;
+    font-size: 28px;
+    line-height: 1;
+    cursor: pointer;
+    color: #333;
+}
+
+@media (max-width: 900px) {
+    .modal { max-width: 100%; }
+    iframe { width: 100%; height: 56vw; max-height: 60vh; }
+}
+
+@media (min-width: 901px) {
+    iframe { display: block; width: 100%; height: 500px; }
+}
