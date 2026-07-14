@@ -1,8 +1,22 @@
-from flask import Flask, render_template
+import os
+import re
+import sqlite3
 
-from database.db import close_db, init_db, seed_db
+from flask import (
+    Flask,
+    abort,
+    redirect,
+    render_template,
+    request,
+    session,
+    url_for,
+)
+from werkzeug.security import generate_password_hash
+
+from database.db import close_db, get_db, init_db, seed_db
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
 
 # ------------------------------------------------------------------ #
@@ -13,6 +27,25 @@ with app.app_context():
     seed_db()
 
 app.teardown_appcontext(close_db)
+
+
+# ------------------------------------------------------------------ #
+# Helpers                                                              #
+# ------------------------------------------------------------------ #
+
+def _create_user(name: str, email: str, password: str) -> int:
+    """Insert a new user row and return the new id.
+
+    Caller is expected to have already validated ``name``/``email``/``password``.
+    Raises ``sqlite3.IntegrityError`` if the email is already taken (UNIQUE).
+    """
+    db = get_db()
+    cur = db.execute(
+        "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+        (name, email, generate_password_hash(password)),
+    )
+    db.commit()
+    return cur.lastrowid
 
 
 # ------------------------------------------------------------------ #
@@ -34,9 +67,44 @@ def privacy():
     return render_template("privacy.html")
 
 
-@app.route("/register")
+@app.route("/register", methods=["GET", "POST"])
 def register():
-    return render_template("register.html")
+    if request.method == "GET":
+        return render_template("register.html", name="", email="", error=None)
+
+    name = request.form.get("name", "").strip()
+    email = request.form.get("email", "").strip()
+    password = request.form.get("password", "")
+
+    # Validation — first failure wins, keeps error messages user-friendly.
+    if not name:
+        return render_template("register.html", name=name, email=email,
+                               error="Name is required.")
+    if len(name) > 80:
+        return render_template("register.html", name=name, email=email,
+                               error="Name is too long (max 80 characters).")
+    if not email:
+        return render_template("register.html", name=name, email=email,
+                               error="Email is required.")
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return render_template("register.html", name=name, email=email,
+                               error="Enter a valid email address.")
+    if len(email) > 120:
+        return render_template("register.html", name=name, email=email,
+                               error="Email is too long (max 120 characters).")
+    if len(password) < 8:
+        return render_template("register.html", name=name, email=email,
+                               error="Password must be at least 8 characters.")
+
+    try:
+        user_id = _create_user(name, email, password)
+    except sqlite3.IntegrityError:
+        return render_template("register.html", name=name, email=email,
+                               error="An account with that email already exists.")
+
+    session.clear()
+    session["user_id"] = user_id
+    return redirect(url_for("landing"))
 
 
 @app.route("/login")
@@ -50,7 +118,8 @@ def login():
 
 @app.route("/logout")
 def logout():
-    return "Logout — coming in Step 3"
+    session.clear()
+    return redirect(url_for("landing"))
 
 
 @app.route("/profile")
