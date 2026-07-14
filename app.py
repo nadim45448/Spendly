@@ -11,9 +11,9 @@ from flask import (
     session,
     url_for,
 )
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 
-from database.db import close_db, get_db, init_db, seed_db
+from database.db import close_db, get_db, init_db, seed_db, get_user_by_email
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
@@ -69,6 +69,10 @@ def privacy():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    # Redirect signed-in users away from registration
+    if session.get("user_id"):
+        return redirect(url_for("landing"))
+
     if request.method == "GET":
         return render_template("register.html", name="", email="", error=None)
 
@@ -107,9 +111,31 @@ def register():
     return redirect(url_for("landing"))
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    return render_template("login.html")
+    # Redirect signed-in users away from the login page
+    if session.get("user_id"):
+        return redirect(url_for("landing"))
+
+    if request.method == "GET":
+        return render_template("login.html", error=None)
+
+    # POST — authenticate
+    email = request.form.get("email", "").strip()
+    password = request.form.get("password", "")
+
+    if not email:
+        return render_template("login.html", error="Email is required.")
+    if not password:
+        return render_template("login.html", error="Password is required.")
+
+    user = get_user_by_email(email)
+    if user is None or not check_password_hash(user["password_hash"], password):
+        return render_template("login.html", error="Invalid email or password.")
+
+    session.clear()
+    session["user_id"] = user["id"]
+    return redirect(url_for("landing"))
 
 
 # ------------------------------------------------------------------ #

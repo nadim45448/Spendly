@@ -110,3 +110,13 @@ def seed_db():
         )
 
     db.commit()
+
+
+def get_user_by_email(email: str):
+    """Return the user row for the given email, or None if not found.
+
+    Uses a parameterised query and returns a sqlite3.Row (dict-like) when
+    a match exists so callers can index by column name.
+    """
+    db = get_db()
+    return db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
