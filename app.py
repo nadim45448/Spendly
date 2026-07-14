@@ -1,3 +1,4 @@
+import datetime
 import os
 import re
 import sqlite3
@@ -13,7 +14,15 @@ from flask import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from database.db import close_db, get_db, init_db, seed_db, get_user_by_email
+from database.db import (
+    close_db,
+    get_db,
+    init_db,
+    seed_db,
+    get_user_by_email,
+    get_user_by_id,
+    get_expense_stats,
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
@@ -46,6 +55,25 @@ def _create_user(name: str, email: str, password: str) -> int:
     )
     db.commit()
     return cur.lastrowid
+
+
+def _format_joined_date(raw: str) -> str:
+    """Format a stored ``created_at`` value as "Month D, YYYY".
+
+    SQLite's ``datetime('now')`` stores an ISO-8601 string like
+    ``2026-07-14 09:30:00``. We try a couple of common shapes so the
+    fallback never crashes the page render — at worst we return the
+    raw string from the database. The day-of-month is stripped of its
+    leading zero explicitly (strftime's ``%-d`` is POSIX-only, so we
+    can't rely on it on Windows).
+    """
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+        try:
+            dt = datetime.datetime.strptime(raw, fmt)
+        except ValueError:
+            continue
+        return f"{dt.strftime('%B')} {dt.day}, {dt.year}"
+    return raw
 
 
 # ------------------------------------------------------------------ #
@@ -150,7 +178,54 @@ def logout():
 
 @app.route("/profile")
 def profile():
-    return "Profile page — coming in Step 4"
+    """Render the profile page for the currently logged-in user.
+
+    Guards in order:
+
+    1. No ``user_id`` in the session → redirect to the login page (the
+       friendlier landing flow, not a 401).
+    2. ``user_id`` set but the row no longer exists → stale session.
+       Clear the session and redirect to login so the user re-authenticates.
+    3. Otherwise render the page with hardcoded demo data (Step 4 is UI/design only;
+       real database integration happens in Step 5).
+    """
+    user_id = session.get("user_id")
+    if user_id is None:
+       return redirect(url_for("login"))
+
+    user = get_user_by_id(user_id)
+    if user is None:
+       session.clear()
+       return redirect(url_for("login"))
+
+    # Hardcoded demo data for Step 4 (UI design). Step 5 will wire up real database queries.
+    demo_stats = {
+       "total_count": 8,
+       "total_amount": 280.84,
+       "by_category": [
+           ("Food", 2, 109.25),
+           ("Bills", 1, 89.99),
+           ("Shopping", 1, 54.20),
+           ("Transport", 1, 45.00),
+           ("Entertainment", 1, 15.00),
+           ("Health", 1, 32.40),
+           ("Other", 1, 8.00),
+       ],
+    }
+
+    # Pre-compute display values here so the template stays logic-free.
+    joined_date = _format_joined_date(user["created_at"])
+    formatted_total = f"৳ {demo_stats['total_amount']:,.2f}"
+    distinct_categories = len(demo_stats["by_category"])
+
+    return render_template(
+       "profile.html",
+       user=user,
+       stats=demo_stats,
+       joined_date=joined_date,
+       formatted_total=formatted_total,
+       distinct_categories=distinct_categories,
+    )
 
 
 @app.route("/expenses/add")

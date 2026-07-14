@@ -120,3 +120,58 @@ def get_user_by_email(email: str):
     """
     db = get_db()
     return db.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+
+
+def get_user_by_id(user_id: int):
+    """Return the user row for the given id, or None if not found.
+
+    Uses a parameterised query and returns a sqlite3.Row (dict-like) when
+    a match exists so callers can index by column name. Mirrors
+    ``get_user_by_email`` so routes that authenticate by id (e.g. the
+    profile view) can fetch the full user record.
+    """
+    db = get_db()
+    return db.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+
+
+def get_expense_stats(user_id: int) -> dict:
+    """Return aggregate expense statistics for the given user.
+
+    The returned dict has three keys:
+
+    - ``total_count``:  int — total number of expenses recorded by the user
+    - ``total_amount``: float — sum of all expense amounts (0.0 when none)
+    - ``by_category``: list of ``(category, count, total)`` tuples, ordered
+      by ``total`` descending so the template's "top categories" list is
+      already sorted.
+
+    All queries are parameterised. ``COALESCE`` keeps the aggregate
+    ``SUM`` returning 0 instead of ``None`` when the user has no rows.
+    """
+    db = get_db()
+
+    totals_row = db.execute(
+        """SELECT COUNT(*)            AS count,
+                  COALESCE(SUM(amount), 0) AS total
+             FROM expenses
+            WHERE user_id = ?""",
+        (user_id,),
+    ).fetchone()
+
+    by_category_rows = db.execute(
+        """SELECT category,
+                  COUNT(*)                 AS count,
+                  COALESCE(SUM(amount), 0) AS total
+             FROM expenses
+            WHERE user_id = ?
+         GROUP BY category
+         ORDER BY total DESC""",
+        (user_id,),
+    ).fetchall()
+
+    return {
+        "total_count":  int(totals_row["count"]),
+        "total_amount": float(totals_row["total"]),
+        "by_category":  [(row["category"], int(row["count"]), float(row["total"]))
+                         for row in by_category_rows],
+    }

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Your Profile — Spendly{% endblock %}
+
+{% block head %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="profile-page">
+
+    <header class="profile-header">
+        <h1>Your Profile</h1>
+    </header>
+
+    <article class="profile-card">
+        <div class="profile-avatar" aria-hidden="true">
+            {{ user["name"][:1] | upper }}
+        </div>
+        <div class="profile-meta">
+            <h2 class="profile-name">{{ user["name"] }}</h2>
+            <p class="profile-email">{{ user["email"] }}</p>
+            <p class="profile-joined">Joined {{ joined_date }}</p>
+        </div>
+    </article>
+
+    <section class="profile-stats" aria-label="Expense summary">
+        <div class="stat-tile">
+            <p class="stat-label">Expenses recorded</p>
+            <p class="stat-value">{{ stats.total_count }}</p>
+        </div>
+        <div class="stat-tile">
+            <p class="stat-label">Total spent</p>
+            <p class="stat-value">{{ formatted_total }}</p>
+        </div>
+        <div class="stat-tile">
+            <p class="stat-label">Categories used</p>
+            <p class="stat-value">{{ distinct_categories }}</p>
+        </div>
+    </section>
+
+    <section class="profile-section">
+        <h3 class="profile-section-title">Recent transactions</h3>
+
+        {% if stats.total_count == 0 %}
+            <p class="profile-empty">No expenses recorded yet.</p>
+        {% else %}
+            <table class="transaction-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Date</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Category</th>
+                        <th scope="col">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Jul 14, 2026</td>
+                        <td>Morning coffee</td>
+                        <td><span class="category-badge food">Food</span></td>
+                        <td>৳ 85.50</td>
+                    </tr>
+                    <tr>
+                        <td>Jul 13, 2026</td>
+                        <td>Taxi to office</td>
+                        <td><span class="category-badge transport">Transport</span></td>
+                        <td>৳ 120.00</td>
+                    </tr>
+                    <tr>
+                        <td>Jul 12, 2026</td>
+                        <td>Monthly internet bill</td>
+                        <td><span class="category-badge bills">Bills</span></td>
+                        <td>৳ 899.99</td>
+                    </tr>
+                </tbody>
+            </table>
+        {% endif %}
+    </section>
+
+    <section class="profile-section">
+        <h3 class="profile-section-title">Spending by category</h3>
+
+        {% if stats.total_count == 0 %}
+            <p class="profile-empty">No expenses yet — add one to see stats here.</p>
+        {% else %}
+            <table class="category-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Category</th>
+                        <th scope="col">Count</th>
+                        <th scope="col">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category, count, total in stats.by_category %}
+                    <tr>
+                        <td>{{ category }}</td>
+                        <td>{{ count }}</td>
+                        <td>৳ {{ "%.2f" | format(total) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </section>
+
+    <div class="profile-actions">
+        <a href="{{ url_for('landing') }}" class="btn-secondary">Back to home</a>
+    </div>
+
+</section>
+{% endblock %}
