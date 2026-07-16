@@ -27,83 +27,73 @@
     <section class="profile-stats" aria-label="Expense summary">
         <div class="stat-tile">
             <p class="stat-label">Expenses recorded</p>
-            <p class="stat-value">{{ stats.total_count }}</p>
+            <p class="stat-value">{{ stats.transaction_count }}</p>
         </div>
         <div class="stat-tile">
             <p class="stat-label">Total spent</p>
             <p class="stat-value">{{ formatted_total }}</p>
         </div>
         <div class="stat-tile">
-            <p class="stat-label">Categories used</p>
-            <p class="stat-value">{{ distinct_categories }}</p>
+            <p class="stat-label">Top category</p>
+            <p class="stat-value">{{ stats.top_category }}</p>
         </div>
     </section>
 
-    <section class="profile-section">
-        <h3 class="profile-section-title">Recent transactions</h3>
+    <div class="profile-layout-grid">
+        <section class="profile-section">
+            <h3 class="profile-section-title">Recent transactions</h3>
 
-        {% if stats.total_count == 0 %}
-            <p class="profile-empty">No expenses recorded yet.</p>
-        {% else %}
-            <table class="transaction-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Date</th>
-                        <th scope="col">Description</th>
-                        <th scope="col">Category</th>
-                        <th scope="col">Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Jul 14, 2026</td>
-                        <td>Morning coffee</td>
-                        <td><span class="category-badge food">Food</span></td>
-                        <td>৳ 85.50</td>
-                    </tr>
-                    <tr>
-                        <td>Jul 13, 2026</td>
-                        <td>Taxi to office</td>
-                        <td><span class="category-badge transport">Transport</span></td>
-                        <td>৳ 120.00</td>
-                    </tr>
-                    <tr>
-                        <td>Jul 12, 2026</td>
-                        <td>Monthly internet bill</td>
-                        <td><span class="category-badge bills">Bills</span></td>
-                        <td>৳ 899.99</td>
-                    </tr>
-                </tbody>
-            </table>
-        {% endif %}
-    </section>
+            {% if stats.transaction_count == 0 %}
+                <p class="profile-empty">No expenses recorded yet.</p>
+            {% else %}
+                <table class="transaction-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Category</th>
+                            <th scope="col">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for txn in transactions %}
+                        <tr>
+                            <td>{{ txn.date }}</td>
+                            <td>{{ txn.description }}</td>
+                            <td><span class="category-badge {{ txn.category|lower }}">{{ txn.category }}</span></td>
+                            <td>৳ {{ "%.2f"|format(txn.amount) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </section>
 
-    <section class="profile-section">
-        <h3 class="profile-section-title">Spending by category</h3>
+        <section class="profile-section">
+            <h3 class="profile-section-title">Spending by category</h3>
 
-        {% if stats.total_count == 0 %}
-            <p class="profile-empty">No expenses yet — add one to see stats here.</p>
-        {% else %}
-            <table class="category-table">
-                <thead>
-                    <tr>
-                        <th scope="col">Category</th>
-                        <th scope="col">Count</th>
-                        <th scope="col">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for category, count, total in stats.by_category %}
-                    <tr>
-                        <td>{{ category }}</td>
-                        <td>{{ count }}</td>
-                        <td>৳ {{ "%.2f" | format(total) }}</td>
-                    </tr>
+            {% if stats.transaction_count == 0 %}
+                <p class="profile-empty">No expenses yet — add one to see stats here.</p>
+            {% else %}
+                <div class="category-list">
+                    {% for cat in categories %}
+                    <div class="category-progress-item">
+                        <div class="category-progress-meta">
+                            <span class="category-name-label">{{ cat.name }}</span>
+                            <div class="category-value-group">
+                                <span class="category-amount-label">৳ {{ "%.2f"|format(cat.amount) }}</span>
+                                <span class="category-pct-label">{{ cat.pct }}%</span>
+                            </div>
+                        </div>
+                        <div class="progress-bar-track">
+                            <div class="progress-bar-fill {{ cat.name|lower }}" style="width: {{ cat.pct }}%;"></div>
+                        </div>
+                    </div>
                     {% endfor %}
-                </tbody>
-            </table>
-        {% endif %}
-    </section>
+                </div>
+            {% endif %}
+        </section>
+    </div>
 
     <div class="profile-actions">
         <a href="{{ url_for('landing') }}" class="btn-secondary">Back to home</a>

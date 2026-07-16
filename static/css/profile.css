@@ -212,6 +212,18 @@
 
 
 /* ------------------------------------------------------------------
+   Layout grid
+   ------------------------------------------------------------------ */
+
+.profile-layout-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+
+/* ------------------------------------------------------------------
    Category breakdown table
    ------------------------------------------------------------------ */
 
@@ -230,38 +242,88 @@
     margin: 0 0 1rem;
 }
 
-.category-table {
-    width: 100%;
-    border-collapse: collapse;
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.category-progress-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.category-progress-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     font-size: 0.95rem;
 }
 
-.category-table thead th {
-    text-align: left;
+.category-name-label {
     font-weight: 500;
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ink-muted);
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.category-table tbody td {
-    padding: 0.75rem;
     color: var(--ink);
-    border-bottom: 1px solid var(--border-soft);
-    vertical-align: middle;
 }
 
-.category-table tbody tr:last-child td {
-    border-bottom: none;
+.category-value-group {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
 }
 
-.category-table tbody td:nth-child(2),
-.category-table tbody td:nth-child(3) {
-    text-align: right;
+.category-amount-label {
+    color: var(--ink);
     font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}
+
+.category-pct-label {
+    color: var(--ink-muted);
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.progress-bar-track {
+    width: 100%;
+    height: 8px;
+    background: var(--border-soft);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.progress-bar-fill.food {
+    background: var(--accent);
+}
+
+.progress-bar-fill.transport {
+    background: var(--accent-2);
+}
+
+.progress-bar-fill.bills {
+    background: var(--danger);
+}
+
+.progress-bar-fill.health {
+    background: var(--accent);
+}
+
+.progress-bar-fill.entertainment {
+    background: var(--accent-2);
+}
+
+.progress-bar-fill.shopping {
+    background: var(--danger);
+}
+
+.progress-bar-fill.other {
+    background: var(--ink-faint);
 }
 
 .profile-empty {
@@ -303,6 +365,13 @@
    Responsive — collapse to a single column on small screens
    ------------------------------------------------------------------ */
 
+@media (max-width: 900px) {
+    .profile-layout-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
 @media (max-width: 720px) {
     .profile-page {
         padding: 1.5rem 1rem 3rem;
@@ -339,12 +408,6 @@
 
     .transaction-table thead th,
     .transaction-table tbody td {
-        padding: 0.5rem 0.4rem;
-        font-size: 0.875rem;
-    }
-
-    .category-table thead th,
-    .category-table tbody td {
         padding: 0.5rem 0.4rem;
         font-size: 0.875rem;
     }
