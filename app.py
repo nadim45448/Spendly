@@ -99,7 +99,7 @@ def privacy():
 def register():
     # Redirect signed-in users away from registration
     if session.get("user_id"):
-        return redirect(url_for("landing"))
+        return redirect(url_for("profile"))
 
     if request.method == "GET":
         return render_template("register.html", name="", email="", error=None)
@@ -136,14 +136,14 @@ def register():
 
     session.clear()
     session["user_id"] = user_id
-    return redirect(url_for("landing"))
+    return redirect(url_for("profile"))
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
     # Redirect signed-in users away from the login page
     if session.get("user_id"):
-        return redirect(url_for("landing"))
+        return redirect(url_for("profile"))
 
     if request.method == "GET":
         return render_template("login.html", error=None)
@@ -163,7 +163,7 @@ def login():
 
     session.clear()
     session["user_id"] = user["id"]
-    return redirect(url_for("landing"))
+    return redirect(url_for("profile"))
 
 
 # ------------------------------------------------------------------ #
