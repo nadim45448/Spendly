@@ -23,6 +23,11 @@ from database.db import (
     get_user_by_id,
     get_expense_stats,
 )
+from database.queries import (
+    get_summary_stats,
+    get_recent_transactions,
+    get_category_breakdown,
+)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-change-me")
@@ -186,8 +191,7 @@ def profile():
        friendlier landing flow, not a 401).
     2. ``user_id`` set but the row no longer exists → stale session.
        Clear the session and redirect to login so the user re-authenticates.
-    3. Otherwise render the page with hardcoded demo data (Step 4 is UI/design only;
-       real database integration happens in Step 5).
+    3. Otherwise fetch live data from the database and render.
     """
     user_id = session.get("user_id")
     if user_id is None:
@@ -198,33 +202,23 @@ def profile():
        session.clear()
        return redirect(url_for("login"))
 
-    # Hardcoded demo data for Step 4 (UI design). Step 5 will wire up real database queries.
-    demo_stats = {
-       "total_count": 8,
-       "total_amount": 280.84,
-       "by_category": [
-           ("Food", 2, 109.25),
-           ("Bills", 1, 89.99),
-           ("Shopping", 1, 54.20),
-           ("Transport", 1, 45.00),
-           ("Entertainment", 1, 15.00),
-           ("Health", 1, 32.40),
-           ("Other", 1, 8.00),
-       ],
-    }
+    # Live database queries (Step 5)
+    stats = get_summary_stats(user_id)
+    transactions = get_recent_transactions(user_id)
+    categories = get_category_breakdown(user_id)
 
-    # Pre-compute display values here so the template stays logic-free.
+    # Pre-compute display values so the template stays logic-free.
     joined_date = _format_joined_date(user["created_at"])
-    formatted_total = f"৳ {demo_stats['total_amount']:,.2f}"
-    distinct_categories = len(demo_stats["by_category"])
+    formatted_total = f"৳ {stats['total_spent']:,.2f}"
 
     return render_template(
        "profile.html",
        user=user,
-       stats=demo_stats,
+       stats=stats,
+       transactions=transactions,
+       categories=categories,
        joined_date=joined_date,
        formatted_total=formatted_total,
-       distinct_categories=distinct_categories,
     )
 
 
